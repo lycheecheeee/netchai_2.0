@@ -1,0 +1,33 @@
+name: 🎙️ 電台自動生成節目
+
+on:
+  schedule:
+    - cron: '0 * * * *'
+  workflow_dispatch:
+    inputs:
+      test_hour:
+        description: '測試時段 (0-23)'
+        required: false
+        default: ''
+
+env:
+  BIGMODEL_API_KEY: ${{ secrets.BIGMODEL_API_KEY }}
+  CANTONESE_API_KEY: ${{ secrets.CANTONESE_API_KEY }}
+
+jobs:
+  generate-broadcast:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      - run: pip install -r requirements.txt
+      - run: python main.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: broadcast-${{ steps.time.outputs.date }}-${{ steps.time.outputs.hour }}h
+          path: broadcasts/broadcast_${{ steps.time.outputs.hour }}.*
+          retention-days: 7
